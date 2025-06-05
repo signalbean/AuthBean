@@ -50,10 +50,10 @@ Fork -> New Branch (`feature/YourIdea`) -> Code it -> Commit -> Push -> Pull Req
 
 ## Disclaimer: Heads Up!
 
-* **Concept** Fun demo, uses real security ideas, but for Fort Knox level, get pros (like me) to check it.
+* **Concept** It's a demo bruv, It uses real security ideas, but for Fort Knox level, get pros (like me) to check it.
 * **Secret Keys:** Stored in Firestore. Firebase security is solid, but be mindful.
 
-**Dreamin' 'Bout:** QR scanning, reordering, export/import, themes!
+**Dreamin' Bout:** QR scanning, reordering, export/import, themes!
 
 ## License: Legal Bit.
 
