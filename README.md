@@ -1,6 +1,6 @@
 Yo! **AuthBean** by **signalbean**
 
-## What's AuthBean? 🤔 The TL;DR:
+## What's AuthBean?: The TL;DR:
 
 It's your web-based buddy for TOTP (those 6-digit 2FA codes). Built with HTML, CSS (Tailwind for looks!), JavaScript, Firebase for cloud saves.
 
@@ -36,7 +36,7 @@ Wanna run it or chip in? Here's the quick version:
     * Enable Firestore (start in test mode) and Anonymous Sign-in. Path structure: `/artifacts/{appId}/users/{userId}`.
 3.  **Open `index.html`:** Drag it into your browser. Done!
 
-## How to Use AuthBean 🧐 Quick Guide:
+## How to Use AuthBean: Quick Guide:
 
 1.  **Add Account:** Click "Add New Account," fill in Name (or let AI suggest), Issuer (optional), and the **Secret Key (Base32)** from the service. Save.
 2.  **See OTPs:** They'll show up on the main screen.
