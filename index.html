@@ -118,7 +118,6 @@
             opacity: 1;
             bottom: 40px;
         }
-        /* Spinner removed as AI features are not yet initialised, but kept for potential general loading states */
         .loading-spinner {
             border: 3px solid #3f3f3f; 
             border-top: 3px solid #bb86fc; 
@@ -162,7 +161,7 @@
 
     <!-- Footer -->
     <footer class="w-full max-w-2xl mt-12 text-center">
-        <p class="text-xs text-gray-600">&copy; 2025 AuthBean by signalbean</p> <!-- Year Updated -->
+        <p class="text-xs text-gray-600">&copy; 2025 AuthBean by signalbean</p>
     </footer>
 
     <!-- Add/Edit Account Modal -->
@@ -206,7 +205,12 @@
     <!-- Toast Notification Area -->
     <div id="toastArea"></div>
 
-    <!-- Firebase and App Logic -->
+    <!-- Firebase SDKs -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+    
+    <!-- App Logic -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
