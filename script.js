@@ -65,7 +65,7 @@ function showToast(message, type = 'success', duration = 3000) {
             if (toast.parentNode === toastArea) { // Check if still child before removing
                  toastArea.removeChild(toast);
             }
-        }, 300);
+        }, 300); 
     }, duration);
 }
 
@@ -133,13 +133,13 @@ function openModal(accountId = null) {
         secretKeyInput.disabled = false;
     }
     accountModal.classList.remove('hidden');
-    accountModal.style.opacity = "0"; // For transition
-    setTimeout(() => accountModal.style.opacity = "1", 10); // Start transition
+    accountModal.style.opacity = "0"; 
+    setTimeout(() => accountModal.style.opacity = "1", 10); 
 }
 
 function closeModal() {
     accountModal.style.opacity = "0";
-    setTimeout(() => accountModal.classList.add('hidden'), 300); // Wait for transition
+    setTimeout(() => accountModal.classList.add('hidden'), 300); 
 }
 
 function openDeleteModal(id, name) {
@@ -201,13 +201,10 @@ async function saveAccount(event) {
     try {
         const accountsCollectionPath = `artifacts/${appId}/users/${userId}/accounts`;
         if (id) { 
-            // When editing, ensure the original secret is preserved if not being changed by UI
-            // For this version, secret isn't editable in the UI after creation, so keep the cached one.
             const existingAccount = accountsCache.get(id);
             if (existingAccount) {
                  accountData.secret = existingAccount.secret; 
             } else {
-                // This case should ideally not happen if editing a valid account
                 showToast("Error finding original account data for update.", "error");
                 return;
             }
@@ -235,7 +232,7 @@ async function deleteAccountConfirmed() {
     try {
         const accountRef = doc(db, `artifacts/${appId}/users/${userId}/accounts`, accountIdToDelete);
         await deleteDoc(accountRef);
-        accountsCache.delete(accountIdToDelete);
+        // onSnapshot handles ui cache update after db delete
         showToast('Account deleted successfully!');
     } catch (error) {
         console.error('Error deleting account:', error);
@@ -282,7 +279,7 @@ function loadAccounts() {
             return 0;
         });
 
-        accountsListDiv.innerHTML = ''; 
+        accountsListDiv.innerHTML = ''; // wipe old list ensures fresh ui from db
 
         sortedDocs.forEach(docSnapshot => {
             const accountId = docSnapshot.id;
@@ -308,8 +305,10 @@ function loadAccounts() {
                 }
             }
             const cachedAccount = accountsCache.get(accountId);
-            const accountCard = createAccountCard(cachedAccount);
-            accountsListDiv.appendChild(accountCard);
+             if (cachedAccount) { // make sure cachedAccount exists before using it
+                const accountCard = createAccountCard(cachedAccount);
+                accountsListDiv.appendChild(accountCard);
+            }
         });
 
         accountsCache.forEach((_, id) => {
