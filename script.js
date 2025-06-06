@@ -19,8 +19,19 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- Config and Global Variables ---
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO_API_KEY", authDomain: "DEMO_PROJECT.firebaseapp.com", projectId: "DEMO_PROJECT" };
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'authbean-default-app';
+const firebaseConfig = {
+  apiKey: "AIzaSyAyiQeWpzDKtKyzB1h33P3BgAh4BZw8SQ4",
+  authDomain: "authbean.firebaseapp.com",
+  projectId: "authbean",
+  storageBucket: "authbean.firebasestorage.app",
+  messagingSenderId: "988226514837",
+  appId: "1:988226514837:web:9234019855ea652103d09c",
+  measurementId: "G-SFQ63NGZT6"
+};
+// Using the one from firebaseConfig.appId.
+const appId = firebaseConfig.appId;
+// Custom app ID (uncomment the below line to use a static app ID instead (hardcoded))
+// const appId = 'authbean-v1';
 
 let db, auth;
 let userId;
