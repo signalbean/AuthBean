@@ -19,19 +19,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- Config and Global Variables ---
-const firebaseConfig = {
-  apiKey: "AIzaSyAyiQeWpzDKtKyzB1h33P3BgAh4BZw8SQ4",
-  authDomain: "authbean.firebaseapp.com",
-  projectId: "authbean",
-  storageBucket: "authbean.firebasestorage.app",
-  messagingSenderId: "988226514837",
-  appId: "1:988226514837:web:9234019855ea652103d09c",
-  measurementId: "G-SFQ63NGZT6"
-};
-// Using the one from firebaseConfig.appId.
-const appId = firebaseConfig.appId;
-// Custom app ID (uncomment the below line to use a static app ID instead (hardcoded))
-// const appId = 'authbean-v1';
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO_API_KEY", authDomain: "DEMO_PROJECT.firebaseapp.com", projectId: "DEMO_PROJECT" };
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'authbean-default-app';
 
 let db, auth;
 let userId;
@@ -195,7 +184,8 @@ async function saveAccount(event) {
         return;
     }
     try {
-        new otpauth.TOTP({ secret: otpauth.Secret.fromBase32(secret) });
+        // explicitly use window.otpauth
+        new window.otpauth.TOTP({ secret: window.otpauth.Secret.fromBase32(secret) });
     } catch (e) {
         showToast("Invalid secret key. Could not initialize TOTP. " + e.message, "error");
         return;
@@ -290,7 +280,7 @@ function loadAccounts() {
             return 0;
         });
 
-        accountsListDiv.innerHTML = ''; // wipe old list ensures fresh ui from db
+        accountsListDiv.innerHTML = ''; // wiping old list ensures fresh ui from db
 
         sortedDocs.forEach(docSnapshot => {
             const accountId = docSnapshot.id;
@@ -299,13 +289,14 @@ function loadAccounts() {
 
             if (!accountsCache.has(accountId) || accountsCache.get(accountId).updatedAt?.toMillis() !== accountData.updatedAt?.toMillis()) {
                 try {
-                    const totp = new otpauth.TOTP({
+                    // explicitly use window.otpauth
+                    const totp = new window.otpauth.TOTP({
                         issuer: accountData.issuer || undefined,
                         label: accountData.name,
                         algorithm: 'SHA1',
                         digits: 6,
                         period: 30,
-                        secret: otpauth.Secret.fromBase32(accountData.secret)
+                        secret: window.otpauth.Secret.fromBase32(accountData.secret)
                     });
                     accountsCache.set(accountId, { ...accountData, id: accountId, totp });
                 } catch (e) {
@@ -316,7 +307,7 @@ function loadAccounts() {
                 }
             }
             const cachedAccount = accountsCache.get(accountId);
-             if (cachedAccount) { // make sure cachedAccount exists before using it
+             if (cachedAccount) {
                 const accountCard = createAccountCard(cachedAccount);
                 accountsListDiv.appendChild(accountCard);
             }
@@ -343,6 +334,7 @@ function createAccountCard(account) {
     card.className = 'account-card material-surface p-5 rounded-xl shadow-lg';
     card.dataset.accountId = account.id;
 
+    // and here too explicitly use window.otpauth
     const otpValue = account.totp ? account.totp.generate() : "Error";
     const formattedOtp = otpValue.length === 6 ? `${otpValue.slice(0,3)} ${otpValue.slice(3)}` : otpValue;
 
