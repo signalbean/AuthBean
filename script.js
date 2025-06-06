@@ -1,4 +1,8 @@
-// Firebase imports - these are essential for connecting to Firestore
+// Import OTPAuth library as a proper ES Module
+// this is the main fix my dude
+import * as otpauth from 'https://cdn.jsdelivr.net/npm/otpauth@9.2.1/dist/otpauth.esm.js';
+
+// Firebase imports these are all good
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { 
     getAuth, 
@@ -19,19 +23,17 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- Config and Global Variables ---
+// you already have your real firebaseConfig here which is perfect
 const firebaseConfig = {
-  apiKey: "AIzaSyAyiQeWpzDKtKyzB1h33P3BgAh4BZw8SQ4",
-  authDomain: "authbean.firebaseapp.com",
-  projectId: "authbean",
-  storageBucket: "authbean.firebasestorage.app",
-  messagingSenderId: "988226514837",
-  appId: "1:988226514837:web:9234019855ea652103d09c",
-  measurementId: "G-SFQ63NGZT6"
+    apiKey: "AIzaSyAyiQeWpzDKtKyzB1h33P3BgAh4BZw8SQ4",
+    authDomain: "authbean.firebaseapp.com",
+    projectId: "authbean",
+    storageBucket: "authbean.appspot.com",
+    messagingSenderId: "988226514837",
+    appId: "1:988226514837:web:9234019855ea652103d09c",
+    measurementId: "G-SFQ63NGZT6"
 };
-// Using the one from firebaseConfig.appId.
 const appId = firebaseConfig.appId;
-// Custom app ID (uncomment the below line to use a static app ID instead (hardcoded))
-// const appId = 'authbean-v1';
 
 let db, auth;
 let userId;
@@ -73,7 +75,7 @@ function showToast(message, type = 'success', duration = 3000) {
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => {
-            if (toast.parentNode === toastArea) { // Check if still child before removing
+            if (toast.parentNode === toastArea) {
                  toastArea.removeChild(toast);
             }
         }, 300); 
@@ -87,8 +89,6 @@ async function initializeFirebase() {
         const app = initializeApp(firebaseConfig);
         db = getFirestore(app);
         auth = getAuth(app);
-        // For debugging Firestore (after pre checks)
-        // import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js").then(firestore => firestore.setLogLevel('debug'));
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -105,25 +105,19 @@ async function initializeFirebase() {
                 showNoAccountsMessage(true);
                 try {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        console.log("Attempting sign in with custom token...");
                         await signInWithCustomToken(auth, __initial_auth_token);
-                        console.log("Successfully signed in with custom token.");
                     } else {
-                        console.log("No custom token, attempting anonymous sign in...");
                         await signInAnonymously(auth);
-                        console.log("Successfully signed in anonymously.");
                     }
                 } catch (error) {
                     console.error("Error during sign-in:", error);
                     showToast(`Error signing in: ${error.message}`, "error");
-                    userIdDisplay.textContent = "Error signing in";
                 }
             }
         });
     } catch (error) {
         console.error("Firebase initialization error:", error);
         showToast(`Firebase init error: ${error.message}`, "error", 5000);
-        userIdDisplay.textContent = "Firebase Init Error";
     }
 }
 
@@ -182,12 +176,8 @@ async function saveAccount(event) {
     const issuer = issuerNameInput.value.trim();
     const secret = secretKeyInput.value.trim().replace(/\s+/g, '').toUpperCase();
 
-    if (!name) {
-        showToast("Account name cannot be empty.", "error");
-        return;
-    }
-     if (!secret) {
-        showToast("Secret key cannot be empty.", "error");
+    if (!name || !secret) {
+        showToast("Account name and secret key cannot be empty.", "error");
         return;
     }
     if (!/^[A-Z2-7]+=*$/.test(secret) || secret.length < 16) {
@@ -195,8 +185,8 @@ async function saveAccount(event) {
         return;
     }
     try {
-        // explicitly use window.otpauth
-        new window.otpauth.TOTP({ secret: window.otpauth.Secret.fromBase32(secret) });
+        // no more window prefix we use the imported module directly
+        new otpauth.TOTP({ secret: otpauth.Secret.fromBase32(secret) });
     } catch (e) {
         showToast("Invalid secret key. Could not initialize TOTP. " + e.message, "error");
         return;
@@ -244,7 +234,6 @@ async function deleteAccountConfirmed() {
     try {
         const accountRef = doc(db, `artifacts/${appId}/users/${userId}/accounts`, accountIdToDelete);
         await deleteDoc(accountRef);
-        // onSnapshot handles ui cache update after db delete
         showToast('Account deleted successfully!');
     } catch (error) {
         console.error('Error deleting account:', error);
@@ -267,12 +256,10 @@ function loadAccounts() {
     const q = query(collection(db, accountsCollectionPath));
 
     if (accountsUnsubscribe) {
-        console.log("loadAccounts: Unsubscribing from previous listener.");
         accountsUnsubscribe(); 
     }
     
     accountsUnsubscribe = onSnapshot(q, (snapshot) => {
-        console.log(`Snapshot received: ${snapshot.docs.length} accounts.`);
         if (snapshot.empty) {
             accountsListDiv.innerHTML = '';
             showNoAccountsMessage(true);
@@ -283,15 +270,9 @@ function loadAccounts() {
         showNoAccountsMessage(false);
         const newAccountIds = new Set();
         
-        const sortedDocs = snapshot.docs.sort((a, b) => {
-            const nameA = a.data().name.toLowerCase();
-            const nameB = b.data().name.toLowerCase();
-            if (nameA < nameB) return -1;
-            if (nameA > nameB) return 1;
-            return 0;
-        });
+        const sortedDocs = snapshot.docs.sort((a, b) => a.data().name.toLowerCase().localeCompare(b.data().name.toLowerCase()));
 
-        accountsListDiv.innerHTML = ''; // wiping old list ensures fresh ui from db
+        accountsListDiv.innerHTML = ''; 
 
         sortedDocs.forEach(docSnapshot => {
             const accountId = docSnapshot.id;
@@ -300,14 +281,14 @@ function loadAccounts() {
 
             if (!accountsCache.has(accountId) || accountsCache.get(accountId).updatedAt?.toMillis() !== accountData.updatedAt?.toMillis()) {
                 try {
-                    // explicitly use window.otpauth
-                    const totp = new window.otpauth.TOTP({
+                    // no more window prefix here either
+                    const totp = new otpauth.TOTP({
                         issuer: accountData.issuer || undefined,
                         label: accountData.name,
                         algorithm: 'SHA1',
                         digits: 6,
                         period: 30,
-                        secret: window.otpauth.Secret.fromBase32(accountData.secret)
+                        secret: otpauth.Secret.fromBase32(accountData.secret)
                     });
                     accountsCache.set(accountId, { ...accountData, id: accountId, totp });
                 } catch (e) {
@@ -330,9 +311,7 @@ function loadAccounts() {
         updateAllOtps();
     }, (error) => {
         console.error("Error fetching accounts:", error);
-        showToast(`Error fetching accounts: ${error.message}`, "error");
-        accountsListDiv.innerHTML = '<p class="text-red-400 text-center">Could not load accounts. Please try again later.</p>';
-        showNoAccountsMessage(false);
+        showToast(`Error fetching accounts: ${error.message}`, 'error');
     });
 }
 
@@ -345,7 +324,6 @@ function createAccountCard(account) {
     card.className = 'account-card material-surface p-5 rounded-xl shadow-lg';
     card.dataset.accountId = account.id;
 
-    // and here too explicitly use window.otpauth
     const otpValue = account.totp ? account.totp.generate() : "Error";
     const formattedOtp = otpValue.length === 6 ? `${otpValue.slice(0,3)} ${otpValue.slice(3)}` : otpValue;
 
@@ -396,8 +374,6 @@ function createErrorAccountCard(accountName, accountId, errorMessage) {
 function copyOtpToClipboard(otp, cardElement) {
     const textArea = document.createElement("textarea");
     textArea.value = otp.replace(/\s/g, ''); 
-    textArea.style.position = "fixed"; 
-    textArea.style.left = "-9999px";
     document.body.appendChild(textArea);
     textArea.focus(); textArea.select();
     try {
@@ -405,7 +381,7 @@ function copyOtpToClipboard(otp, cardElement) {
         showToast('OTP copied to clipboard!', 'success');
         const copyBtn = cardElement.querySelector('.copy-otp-btn');
         if(copyBtn) { copyBtn.textContent = 'Copied!'; setTimeout(() => { copyBtn.textContent = 'Copy Code'; }, 2000); }
-    } catch (err) { showToast('Failed to copy OTP.', 'error'); console.error('Fallback: Oops, unable to copy', err); }
+    } catch (err) { showToast('Failed to copy OTP.', 'error'); }
     document.body.removeChild(textArea);
 }
 
