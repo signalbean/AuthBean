@@ -39,14 +39,10 @@ let accountsUnsubscribe = null;
 const accountsCache = new Map(); 
 
 // --- UI Elements ---
-// new containers for view switching
 const emptyStateContainer = document.getElementById('empty-state-container');
 const accountsView = document.getElementById('accounts-view');
-
-// two add buttons now
 const addAccountBtn = document.getElementById('addAccountBtn');
 const addAccountBtnTop = document.getElementById('addAccountBtnTop');
-
 const accountModal = document.getElementById('accountModal');
 const cancelModalBtn = document.getElementById('cancelModalBtn');
 const accountForm = document.getElementById('accountForm');
@@ -56,7 +52,6 @@ const accountNameInput = document.getElementById('accountName');
 const issuerNameInput = document.getElementById('issuerName');
 const secretKeyInput = document.getElementById('secretKey');
 const accountsListDiv = document.getElementById('accountsList');
-// noAccountsMessage is now part of emptyStateContainer
 const userIdDisplay = document.getElementById('userIdDisplay');
 
 // Confirm Delete Modal Elements
@@ -97,16 +92,13 @@ async function initializeFirebase() {
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                console.log("User is signed in with UID:", user.uid);
                 userId = user.uid;
                 userIdDisplay.textContent = userId; 
                 if (accountsUnsubscribe) accountsUnsubscribe(); 
                 loadAccounts(); 
             } else {
-                console.log("User is signed out. Attempting to sign in...");
                 userId = null;
                 userIdDisplay.textContent = "anonymous";
-                // show empty state on sign out
                 accountsView.classList.add('hidden');
                 emptyStateContainer.classList.remove('hidden');
                 emptyStateContainer.classList.add('flex');
@@ -199,13 +191,7 @@ async function saveAccount(event) {
         return;
     }
 
-    const accountData = {
-        name,
-        issuer,
-        secret, 
-        userId, 
-        updatedAt: Timestamp.now()
-    };
+    const accountData = { name, issuer, secret, userId, updatedAt: Timestamp.now() };
 
     try {
         const accountsCollectionPath = `artifacts/${appId}/users/${userId}/accounts`;
@@ -252,24 +238,19 @@ async function deleteAccountConfirmed() {
 // --- Account Display and OTP Generation ---
 function loadAccounts() {
     if (!userId) {
-        console.log("loadAccounts: No user ID, skipping Firestore query.");
         accountsView.classList.add('hidden');
         emptyStateContainer.classList.remove('hidden');
         emptyStateContainer.classList.add('flex');
         return;
     }
 
-    console.log(`loadAccounts: Setting up snapshot listener for user ${userId}`);
     const accountsCollectionPath = `artifacts/${appId}/users/${userId}/accounts`;
     const q = query(collection(db, accountsCollectionPath));
 
-    if (accountsUnsubscribe) {
-        accountsUnsubscribe(); 
-    }
+    if (accountsUnsubscribe) { accountsUnsubscribe(); }
     
     accountsUnsubscribe = onSnapshot(q, (snapshot) => {
         if (snapshot.empty) {
-            // here is the logic for showing the centered button
             accountsView.classList.add('hidden');
             emptyStateContainer.classList.remove('hidden');
             emptyStateContainer.classList.add('flex');
@@ -277,15 +258,12 @@ function loadAccounts() {
             return;
         }
         
-        // and here is the logic for showing the accounts list
         emptyStateContainer.classList.add('hidden');
         emptyStateContainer.classList.remove('flex');
         accountsView.classList.remove('hidden');
         
         const newAccountIds = new Set();
-        
         const sortedDocs = snapshot.docs.sort((a, b) => a.data().name.toLowerCase().localeCompare(b.data().name.toLowerCase()));
-
         accountsListDiv.innerHTML = ''; 
 
         sortedDocs.forEach(docSnapshot => {
@@ -305,7 +283,7 @@ function loadAccounts() {
                     });
                     accountsCache.set(accountId, { ...accountData, id: accountId, totp });
                 } catch (e) {
-                    console.error(`Error creating TOTP for account ${accountData.name} (${accountId}):`, e.message);
+                    console.error(`Error creating TOTP for account ${accountData.name}:`, e);
                     const errorCard = createErrorAccountCard(accountData.name, accountId, e.message);
                     accountsListDiv.appendChild(errorCard);
                     return; 
@@ -319,7 +297,9 @@ function loadAccounts() {
         });
 
         accountsCache.forEach((_, id) => {
-            if (!newAccountIds.has(id)) accountsCache.delete(id);
+            if (!newAccountIds.has(id)) {
+                accountsCache.delete(id);
+            }
         });
         updateAllOtps();
     }, (error) => {
@@ -330,7 +310,8 @@ function loadAccounts() {
 
 function createAccountCard(account) {
     const card = document.createElement('div');
-    card.className = 'surface-card p-5 rounded-xl shadow-lg'; // updated class
+    // this class name is what we use to find all cards for the progress bar
+    card.className = 'auth-card surface-card p-5 rounded-xl shadow-lg'; 
     card.dataset.accountId = account.id;
 
     const otpValue = account.totp ? account.totp.generate() : "Error";
@@ -343,17 +324,17 @@ function createAccountCard(account) {
                 <p class="text-sm text-gray-400">${account.issuer || 'No Issuer'}</p>
             </div>
             <div class="space-x-2">
-                <button class="edit-btn text-cyan-glow hover:text-purple-glow text-xs" title="Edit Account">Edit</button>
+                <button class="edit-btn text-accent-brand hover:text-main-brand text-xs" title="Edit Account">Edit</button>
                 <button class="delete-btn text-red-400 hover:text-red-300 text-xs" title="Delete Account">Delete</button>
             </div>
         </div>
         <div class="text-center my-3">
-            <p class="otp-code">${formattedOtp}</p>
+            <p class="otp-code font-bold">${formattedOtp}</p>
         </div>
-        <div class="w-full bg-gray-700 rounded-full h-1 mb-2">
-            <div class="progress-bar" style="width: 100%;"></div>
+        <div class="w-full bg-gray-500/30 rounded-full h-1 mb-2 overflow-hidden">
+            <div class="progress-bar h-full" style="width: 100%;"></div>
         </div>
-        <button class="copy-otp-btn text-xs text-gray-400 hover:text-cyan-glow float-right">Copy Code</button>
+        <button class="copy-otp-btn text-xs text-gray-400 hover:text-accent-brand float-right">Copy Code</button>
     `;
 
     card.querySelector('.edit-btn').addEventListener('click', (e) => { e.stopPropagation(); openModal(account.id); });
@@ -364,11 +345,11 @@ function createAccountCard(account) {
 
 function createErrorAccountCard(accountName, accountId, errorMessage) {
     const card = document.createElement('div');
-    card.className = 'surface-card p-5 rounded-xl shadow-lg border border-red-500';
+    card.className = 'auth-card surface-card p-5 rounded-xl shadow-lg border border-red-500';
     card.dataset.accountId = accountId;
     card.innerHTML = `
         <div class="flex justify-between items-start mb-1">
-            <div><h2 class="text-xl font-semibold text-red-300">${accountName} (Error)</h2></div>
+            <div><h2 class="text-xl font-semibold text-red-400">${accountName} (Error)</h2></div>
              <button class="delete-btn text-red-400 hover:text-red-300 text-xs" title="Delete Account">Delete</button>
         </div>
         <div class="text-center my-3">
@@ -400,7 +381,8 @@ function updateAllOtps() {
     const timeLeft = period - (seconds % period);
     const progressPercent = (timeLeft / period) * 100;
     
-    document.querySelectorAll('.surface-card').forEach(card => { // changed selector to be more specific
+    // updated selector to be specific to the account cards
+    document.querySelectorAll('.auth-card').forEach(card => {
         const accountId = card.dataset.accountId;
         if (accountsCache.has(accountId)) {
             const account = accountsCache.get(accountId);
@@ -409,18 +391,19 @@ function updateAllOtps() {
                 const formattedOtp = otpValue.length === 6 ? `${otpValue.slice(0,3)} ${otpValue.slice(3)}` : otpValue;
                 const otpElement = card.querySelector('.otp-code');
                 if (otpElement && otpElement.textContent !== formattedOtp) otpElement.textContent = formattedOtp;
-            } else {
-                 const otpElement = card.querySelector('.otp-code'); if(otpElement) otpElement.textContent = "Error";
             }
+            // this is the fix for the progress bar
             const progressBar = card.querySelector('.progress-bar');
-            if (progressBar) progressBar.style.width = `${progressPercent}%`;
+            if (progressBar) {
+                progressBar.style.width = `${progressPercent}%`;
+            }
         }
     });
 }
 
 // --- Event Listeners ---
 addAccountBtn.addEventListener('click', () => openModal());
-addAccountBtnTop.addEventListener('click', () => openModal()); // wiring up the second button
+addAccountBtnTop.addEventListener('click', () => openModal());
 cancelModalBtn.addEventListener('click', closeModal);
 accountForm.addEventListener('submit', saveAccount);
 
