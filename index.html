@@ -1,173 +1,164 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark-mode"> <!-- default to dark mode -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AuthBean - by signalbean</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- otpauth.min.js script tag is now REMOVED from here and the body -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        body {
+        html { scroll-behavior: smooth; }
+        
+        /* --- DARK MODE THEME (DEFAULT) --- */
+        .dark-mode body {
             font-family: 'Inter', sans-serif;
-            background-color: #121212;
-            color: #e0e0e0;
+            background-color: #0c0a19;
+            color: #E5E7EB;
+            overflow-x: hidden;
         }
-        .material-surface {
-            background-color: #1e1e1e;
-            border: 1px solid #2a2a2a;
+        .dark-mode #bg-canvas { display: block; }
+        .dark-mode .text-cyan-glow { color: #22d3ee; text-shadow: 0 0 8px rgba(34, 211, 238, 0.6); }
+        .dark-mode .text-purple-glow { color: #c084fc; text-shadow: 0 0 8px rgba(192, 132, 252, 0.6); }
+        .dark-mode .btn-glow {
+            background-image: linear-gradient(to right, #a855f7 0%, #22d3ee 51%, #a855f7 100%);
+            background-size: 200% auto;
+            color: white;
+            transition: all 0.5s ease;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+            animation: gradient-loop 4s ease infinite;
         }
-        .material-primary {
-            background-color: #bb86fc;
-            color: #000000;
+        .dark-mode .btn-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(34, 211, 238, 0.5), 0 0 30px rgba(168, 85, 247, 0.5);
         }
-        .material-primary:hover {
-            background-color: #a775e8;
+        .dark-mode .surface-card {
+            background-color: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid #374151;
         }
-        .material-secondary {
-            background-color: #03dac6; 
-            color: #000000;
-        }
-        .material-secondary:hover {
-            background-color: #02c9b6;
-        }
-        .material-input {
-            background-color: #2c2c2c;
-            border: 1px solid #3f3f3f;
-            color: #e0e0e0;
-        }
-        .material-input:focus {
-            border-color: #bb86fc;
-            outline: none;
-        }
-        .otp-code {
-            font-size: 2.5rem;
-            letter-spacing: 0.1em;
-            color: #03dac6;
-        }
-        .progress-bar {
-            height: 4px;
-            background-color: #bb86fc;
-            transition: width 1s linear;
-            border-radius: 2px;
-        }
-        /* Modal styles */
-        .modal-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 50;
-            transition: opacity 0.3s ease-in-out;
-        }
-        .modal-content {
-            min-width: 350px;
-            max-width: 500px;
-            transform: scale(0.95);
-            transition: transform 0.3s ease-in-out;
-        }
-        .modal-backdrop:not(.hidden) .modal-content {
-            transform: scale(1);
-        }
+        .dark-mode .material-input { background-color: rgba(12, 10, 25, 0.7); border: 1px solid #374151; color: #E5E7EB; }
+        .dark-mode .material-input:focus { border-color: #22d3ee; outline: none; box-shadow: 0 0 10px rgba(34, 211, 238, 0.4); }
+        .dark-mode .otp-code { color: #22d3ee; text-shadow: 0 0 8px rgba(34, 211, 238, 0.6); }
+        .dark-mode .progress-bar { background-color: #c084fc; box-shadow: 0 0 8px rgba(192, 132, 252, 0.6); }
+        .dark-mode .modal-backdrop { background-color: rgba(12, 10, 25, 0.6); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+        .dark-mode .toast { border: 1px solid #374151; font-weight: 500; }
+        .dark-mode .toast-success { background-color: rgba(34, 211, 238, 0.2); color: #67e8f9; }
+        .dark-mode .toast-error { background-color: rgba(244, 63, 94, 0.2); color: #fb7185; }
 
-        /* Custom scrollbar for dark theme */
-        ::-webkit-scrollbar {
-            width: 8px;
+        /* --- LIGHT MODE THEME --- */
+        .light-mode body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* light gray */
+            color: #11182c; /* dark text */
+            overflow-x: hidden;
         }
-        ::-webkit-scrollbar-track {
-            background: #1e1e1e;
+        .light-mode #bg-canvas { display: none; } /* hide canvas in light mode */
+        .light-mode .text-cyan-glow { color: #0891b2; } /* no glow */
+        .light-mode .text-purple-glow { color: #9333ea; } /* no glow */
+        .light-mode .btn-glow {
+            background-image: linear-gradient(to right, #9333ea 0%, #0891b2 51%, #9333ea 100%);
+            background-size: 200% auto;
+            color: white;
+            transition: all 0.5s ease;
+            box-shadow: 0 4px 15px 0 rgba(147, 51, 234, 0.4);
+            animation: gradient-loop 4s ease infinite;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #424242;
-            border-radius: 4px;
+        .light-mode .btn-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(8, 145, 178, 0.4);
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
+        .light-mode .surface-card {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         }
-        /* Toast notification styles */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.3s ease, bottom 0.3s ease;
+        .light-mode .material-input { background-color: #f9fafb; border: 1px solid #d1d5db; color: #11182c; }
+        .light-mode .material-input:focus { border-color: #9333ea; outline: none; box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.2); }
+        .light-mode .otp-code { color: #0891b2; }
+        .light-mode .progress-bar { background-color: #9333ea; }
+        .light-mode .modal-backdrop { background-color: rgba(17, 24, 39, 0.6); }
+        .light-mode .toast { border: 1px solid #e5e7eb; font-weight: 500; color: #ffffff; }
+        .light-mode .toast-success { background-color: #059669; }
+        .light-mode .toast-error { background-color: #dc2626; }
+
+
+        @keyframes gradient-loop {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-        .toast-success {
-            background-color: #03dac6;
-            color: #000000;
+        
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 8px; font-size: 0.9rem; z-index: 100; opacity: 0; transition: opacity 0.3s ease, bottom 0.3s ease; }
+        .toast.show { opacity: 1; bottom: 40px; }
+        .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; z-index: 50; transition: opacity 0.3s ease-in-out; }
+        .modal-content { min-width: 350px; max-width: 500px; transform: scale(0.95); transition: transform 0.3s ease-in-out; }
+        .modal-backdrop:not(.hidden) .modal-content { transform: scale(1); }
+        
+        /* Theme toggle switch */
+        #theme-toggle-button {
+            background-color: rgba(31, 41, 55, 0.5);
+            border: 1px solid #374151;
         }
-        .toast-error {
-            background-color: #cf6679;
-            color: #000000;
-        }
-        .toast-info {
-            background-color: #6200ee; 
-            color: #ffffff;
-        }
-        .toast.show {
-            opacity: 1;
-            bottom: 40px;
-        }
-        .loading-spinner {
-            border: 3px solid #3f3f3f; 
-            border-top: 3px solid #bb86fc; 
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-left: 8px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .light-mode #theme-toggle-button {
+            background-color: #e5e7eb;
+            border: 1px solid #d1d5db;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center pt-8 pb-8 px-4">
+<body class="antialiased">
+    
+    <canvas id="bg-canvas"></canvas>
 
     <!-- Header -->
-    <header class="w-full max-w-2xl mb-8 text-center">
-        <h1 class="text-4xl font-bold text-[#bb86fc]">Auth<span class="text-[#03dac6]">Bean</span></h1>
-        <p class="text-sm text-gray-400">by signalbean</p>
+    <header class="w-full max-w-2xl text-center pt-8 relative">
+        <h1 class="text-4xl font-black">
+            <span class="text-purple-glow">Auth</span><span class="text-cyan-glow">Bean</span>
+        </h1>
+        <p class="text-sm text-gray-400">by <span class="font-semibold text-purple-glow">signal</span><span class="font-semibold text-cyan-glow">bean</span></p>
         <p class="text-xs text-gray-500 mt-1">User ID: <span id="userIdDisplay">loading...</span></p>
+        
+        <!-- Theme Toggle Switch -->
+        <div class="absolute top-8 right-4">
+            <button id="theme-toggle-button" type="button" class="p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                <i id="theme-icon" class="fas fa-sun text-lg text-yellow-400"></i>
+            </button>
+        </div>
     </header>
 
     <!-- Main Content Area -->
-    <main class="w-full max-w-2xl flex-grow">
-        <!-- Add Account Button -->
-        <div class="mb-6 text-center">
-            <button id="addAccountBtn" class="material-primary font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
-                Add New Account
+    <main class="w-full max-w-2xl flex-grow flex flex-col p-4">
+        <!-- this container will hold the button when no accounts are present -->
+        <div id="empty-state-container" class="flex-grow flex-col justify-center items-center text-center hidden">
+             <button id="addAccountBtn" class="btn-glow font-bold py-3 px-8 rounded-full text-lg inline-block">
+                <i class="fas fa-plus mr-2"></i>Add New Account
             </button>
+            <p id="noAccountsMessage" class="text-gray-500 mt-4">No accounts yet. Add one to get started!</p>
         </div>
 
-        <!-- Accounts List -->
-        <div id="accountsList" class="space-y-4">
-            <!-- Account cards will be injected here by JavaScript -->
+        <!-- this container will hold the accounts list and a smaller add button -->
+        <div id="accounts-view" class="hidden w-full">
+            <div class="text-center mb-6">
+                <button id="addAccountBtnTop" class="btn-glow font-semibold py-2 px-5 rounded-lg text-sm">
+                    <i class="fas fa-plus mr-1"></i>Add Account
+                </button>
+            </div>
+            <div id="accountsList" class="space-y-4">
+                <!-- Account cards will be injected here by JavaScript -->
+            </div>
         </div>
-         <p id="noAccountsMessage" class="text-center text-gray-500 mt-10 hidden">No accounts yet. Add one to get started!</p>
     </main>
 
     <!-- Footer -->
-    <footer class="w-full max-w-2xl mt-12 text-center">
+    <footer class="w-full max-w-2xl text-center pb-8">
         <p class="text-xs text-gray-600">&copy; 2025 AuthBean by signalbean</p>
     </footer>
 
     <!-- Add/Edit Account Modal -->
     <div id="accountModal" class="modal-backdrop hidden">
-        <div class="material-surface modal-content p-6 rounded-xl shadow-2xl w-11/12 md:w-full">
-            <h3 id="modalTitle" class="text-2xl font-semibold mb-6 text-gray-100">Add New Account</h3>
+        <div class="surface-card modal-content p-6 rounded-xl shadow-2xl w-11/12 md:w-full">
+            <h3 id="modalTitle" class="text-2xl font-bold mb-6 text-center"><span class="text-purple-glow">Add</span> <span class="text-cyan-glow">Account</span></h3>
             <form id="accountForm">
                 <input type="hidden" id="accountId">
                 <div class="mb-4">
@@ -176,15 +167,15 @@
                 </div>
                 <div class="mb-4">
                     <label for="issuerName" class="block text-sm font-medium text-gray-300 mb-1">Issuer (Optional)</label>
-                    <input type="text" id="issuerName" name="issuerName" class="w-full p-3 material-input rounded-lg" placeholder="e.g., Company Inc.">
+                    <input type="text" id="issuerName" name="issuerName" class="w-full p-3 material-input rounded-lg" placeholder="e.g., Google, GitHub, etc.">
                 </div>
                 <div class="mb-6">
                     <label for="secretKey" class="block text-sm font-medium text-gray-300 mb-1">Secret Key (Base32)</label>
-                    <input type="text" id="secretKey" name="secretKey" class="w-full p-3 material-input rounded-lg" placeholder="Enter your Base32 secret key" required>
+                    <input type="text" id="secretKey" name="secretKey" class="w-full p-3 material-input rounded-lg" placeholder="Paste your Base32 secret key here" required>
                 </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" id="cancelModalBtn" class="py-2 px-5 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors">Cancel</button>
-                    <button type="submit" class="material-primary font-semibold py-2 px-5 rounded-lg">Save Account</button>
+                <div class="flex justify-end space-x-3 mt-8">
+                    <button type="button" id="cancelModalBtn" class="py-2 px-5 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition-colors">Cancel</button>
+                    <button type="submit" class="btn-glow font-semibold py-2 px-5 rounded-lg">Save Account</button>
                 </div>
             </form>
         </div>
@@ -192,11 +183,11 @@
 
     <!-- Confirm Delete Modal -->
     <div id="confirmDeleteModal" class="modal-backdrop hidden">
-        <div class="material-surface modal-content p-6 rounded-xl shadow-2xl w-11/12 md:w-auto">
-            <h3 class="text-xl font-semibold mb-4 text-gray-100">Confirm Deletion</h3>
-            <p class="text-gray-300 mb-6">Are you sure you want to delete "<span id="accountNameToDelete" class="font-semibold"></span>"? This action cannot be undone.</p>
+        <div class="surface-card modal-content p-6 rounded-xl shadow-2xl w-11/12 md:w-auto">
+            <h3 class="text-xl font-bold mb-4 text-center text-red-400">Confirm Deletion</h3>
+            <p class="text-gray-300 mb-6 text-center">Are you sure you want to delete "<span id="accountNameToDelete" class="font-semibold text-cyan-glow"></span>"?<br>This action cannot be undone.</p>
             <div class="flex justify-end space-x-3">
-                <button type="button" id="cancelDeleteBtn" class="py-2 px-5 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors">Cancel</button>
+                <button type="button" id="cancelDeleteBtn" class="py-2 px-5 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors">Cancel</button>
                 <button type="button" id="confirmDeleteBtn" class="bg-red-600 hover:bg-red-500 text-white font-semibold py-2 px-5 rounded-lg">Delete</button>
             </div>
         </div>
@@ -205,12 +196,139 @@
     <!-- Toast Notification Area -->
     <div id="toastArea"></div>
 
-    <!-- Firebase SDKs -->
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
-    <!-- App Logic -->
+    <!-- App Logic & Firebase SDKs will be handled in script.js as modules -->
     <script type="module" src="script.js"></script>
+    
+    <!-- Background Animation Script -->
+    <script>
+        // Check if three.js is loaded
+        if (typeof THREE !== 'undefined') {
+            let scene, camera, renderer, starLayers = [];
+            let mouseX = 0;
+            let mouseY = 0;
+
+            function createCircleTexture(color, size) {
+                const matCanvas = document.createElement('canvas');
+                matCanvas.width = matCanvas.height = size;
+                const matContext = matCanvas.getContext('2d');
+                const texture = new THREE.Texture(matCanvas);
+                const center = size / 2;
+                matContext.beginPath();
+                matContext.arc(center, center, size/2, 0, 2 * Math.PI, false);
+                matContext.closePath();
+                matContext.fillStyle = color;
+                matContext.fill();
+                texture.needsUpdate = true;
+                return texture;
+            }
+
+            function init() {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+                camera.position.z = 1; 
+                
+                renderer = new THREE.WebGLRenderer({
+                    canvas: document.querySelector('#bg-canvas'),
+                    alpha: true
+                });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                
+                const layers = [
+                    { count: 5000, size: 1.5, color: '#ffffff', speed: 0.00008 },
+                    { count: 3000, size: 2.0, color: '#a855f7', speed: 0.00005 },
+                    { count: 2000,  size: 2.2, color: '#22d3ee', speed: 0.00002 } 
+                ];
+
+                layers.forEach(layerInfo => {
+                    const starGeometry = new THREE.BufferGeometry();
+                    const starVertices = [];
+                    for (let i = 0; i < layerInfo.count; i++) {
+                        const x = (Math.random() - 0.5) * 2000;
+                        const y = (Math.random() - 0.5) * 2000;
+                        const z = (Math.random() - 0.5) * 2000;
+                        starVertices.push(x, y, z);
+                    }
+                    starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+                    
+                    const starMaterial = new THREE.PointsMaterial({
+                        map: createCircleTexture(layerInfo.color, 256),
+                        size: layerInfo.size,
+                        transparent: true,
+                        opacity: 0.8,
+                        alphaTest: 0.5,
+                        sizeAttenuation: true
+                    });
+
+                    const stars = new THREE.Points(starGeometry, starMaterial);
+                    starLayers.push({ points: stars, speed: layerInfo.speed });
+                    scene.add(stars);
+                });
+
+                document.body.addEventListener('mousemove', onMouseMove, { passive: true });
+                window.addEventListener('resize', onWindowResize, false);
+
+                animate();
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                starLayers.forEach((layer) => {
+                    layer.points.rotation.y += layer.speed;
+                });
+                camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.02;
+                camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.02;
+                camera.lookAt(scene.position);
+                renderer.render(scene, camera);
+            }
+
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            function onMouseMove(event) {
+                mouseX = (event.clientX - window.innerWidth / 2) / (window.innerWidth);
+                mouseY = (event.clientY - window.innerHeight / 2) / (window.innerHeight);
+            }
+
+            init();
+        } else {
+            console.error("Three.js library not loaded, background animation won't work.");
+        }
+        
+        // --- Theme Toggle Logic ---
+        const themeToggleButton = document.getElementById('theme-toggle-button');
+        const themeIcon = document.getElementById('theme-icon');
+        const htmlEl = document.documentElement;
+
+        function setTheme(theme) {
+            if (theme === 'light') {
+                htmlEl.classList.add('light-mode');
+                htmlEl.classList.remove('dark-mode');
+                themeIcon.classList.remove('fa-sun', 'text-yellow-400');
+                themeIcon.classList.add('fa-moon', 'text-indigo-400');
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlEl.classList.remove('light-mode');
+                htmlEl.classList.add('dark-mode');
+                themeIcon.classList.remove('fa-moon', 'text-indigo-400');
+                themeIcon.classList.add('fa-sun', 'text-yellow-400');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+        
+        // set theme on initial load
+        const storedTheme = localStorage.getItem('theme') || 'dark';
+        setTheme(storedTheme);
+
+        themeToggleButton.addEventListener('click', () => {
+            const isLight = htmlEl.classList.contains('light-mode');
+            setTheme(isLight ? 'dark' : 'light');
+        });
+    </script>
 </body>
 </html>
