@@ -1,5 +1,4 @@
 // Import OTPAuth library as a proper ES Module
-// this is the main fix my dude
 import * as otpauth from 'https://cdn.jsdelivr.net/npm/otpauth@9.2.1/dist/otpauth.esm.js';
 
 // Firebase imports these are all good
@@ -23,7 +22,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- Config and Global Variables ---
-// you already have your real firebaseConfig here which is perfect
 const firebaseConfig = {
     apiKey: "AIzaSyAyiQeWpzDKtKyzB1h33P3BgAh4BZw8SQ4",
     authDomain: "authbean.firebaseapp.com",
@@ -41,7 +39,10 @@ let accountsUnsubscribe = null;
 const accountsCache = new Map(); 
 
 // --- UI Elements ---
+const emptyStateContainer = document.getElementById('empty-state-container');
+const accountsView = document.getElementById('accounts-view');
 const addAccountBtn = document.getElementById('addAccountBtn');
+const addAccountBtnTop = document.getElementById('addAccountBtnTop');
 const accountModal = document.getElementById('accountModal');
 const cancelModalBtn = document.getElementById('cancelModalBtn');
 const accountForm = document.getElementById('accountForm');
@@ -51,7 +52,6 @@ const accountNameInput = document.getElementById('accountName');
 const issuerNameInput = document.getElementById('issuerName');
 const secretKeyInput = document.getElementById('secretKey');
 const accountsListDiv = document.getElementById('accountsList');
-const noAccountsMessage = document.getElementById('noAccountsMessage');
 const userIdDisplay = document.getElementById('userIdDisplay');
 
 // Confirm Delete Modal Elements
@@ -92,17 +92,17 @@ async function initializeFirebase() {
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                console.log("User is signed in with UID:", user.uid);
                 userId = user.uid;
                 userIdDisplay.textContent = userId; 
                 if (accountsUnsubscribe) accountsUnsubscribe(); 
                 loadAccounts(); 
             } else {
-                console.log("User is signed out. Attempting to sign in...");
                 userId = null;
                 userIdDisplay.textContent = "anonymous";
-                accountsListDiv.innerHTML = ''; 
-                showNoAccountsMessage(true);
+                accountsView.classList.add('hidden');
+                emptyStateContainer.classList.remove('hidden');
+                emptyStateContainer.classList.add('flex');
+                
                 try {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await signInWithCustomToken(auth, __initial_auth_token);
@@ -185,20 +185,13 @@ async function saveAccount(event) {
         return;
     }
     try {
-        // no more window prefix we use the imported module directly
         new otpauth.TOTP({ secret: otpauth.Secret.fromBase32(secret) });
     } catch (e) {
         showToast("Invalid secret key. Could not initialize TOTP. " + e.message, "error");
         return;
     }
 
-    const accountData = {
-        name,
-        issuer,
-        secret, 
-        userId, 
-        updatedAt: Timestamp.now()
-    };
+    const accountData = { name, issuer, secret, userId, updatedAt: Timestamp.now() };
 
     try {
         const accountsCollectionPath = `artifacts/${appId}/users/${userId}/accounts`;
@@ -245,33 +238,32 @@ async function deleteAccountConfirmed() {
 // --- Account Display and OTP Generation ---
 function loadAccounts() {
     if (!userId) {
-        console.log("loadAccounts: No user ID, skipping Firestore query.");
-        accountsListDiv.innerHTML = ''; 
-        showNoAccountsMessage(true);
+        accountsView.classList.add('hidden');
+        emptyStateContainer.classList.remove('hidden');
+        emptyStateContainer.classList.add('flex');
         return;
     }
 
-    console.log(`loadAccounts: Setting up snapshot listener for user ${userId}`);
     const accountsCollectionPath = `artifacts/${appId}/users/${userId}/accounts`;
     const q = query(collection(db, accountsCollectionPath));
 
-    if (accountsUnsubscribe) {
-        accountsUnsubscribe(); 
-    }
+    if (accountsUnsubscribe) { accountsUnsubscribe(); }
     
     accountsUnsubscribe = onSnapshot(q, (snapshot) => {
         if (snapshot.empty) {
-            accountsListDiv.innerHTML = '';
-            showNoAccountsMessage(true);
+            accountsView.classList.add('hidden');
+            emptyStateContainer.classList.remove('hidden');
+            emptyStateContainer.classList.add('flex');
             accountsCache.clear();
             return;
         }
         
-        showNoAccountsMessage(false);
-        const newAccountIds = new Set();
+        emptyStateContainer.classList.add('hidden');
+        emptyStateContainer.classList.remove('flex');
+        accountsView.classList.remove('hidden');
         
+        const newAccountIds = new Set();
         const sortedDocs = snapshot.docs.sort((a, b) => a.data().name.toLowerCase().localeCompare(b.data().name.toLowerCase()));
-
         accountsListDiv.innerHTML = ''; 
 
         sortedDocs.forEach(docSnapshot => {
@@ -281,7 +273,6 @@ function loadAccounts() {
 
             if (!accountsCache.has(accountId) || accountsCache.get(accountId).updatedAt?.toMillis() !== accountData.updatedAt?.toMillis()) {
                 try {
-                    // no more window prefix here either
                     const totp = new otpauth.TOTP({
                         issuer: accountData.issuer || undefined,
                         label: accountData.name,
@@ -292,7 +283,7 @@ function loadAccounts() {
                     });
                     accountsCache.set(accountId, { ...accountData, id: accountId, totp });
                 } catch (e) {
-                    console.error(`Error creating TOTP for account ${accountData.name} (${accountId}):`, e.message);
+                    console.error(`Error creating TOTP for account ${accountData.name}:`, e);
                     const errorCard = createErrorAccountCard(accountData.name, accountId, e.message);
                     accountsListDiv.appendChild(errorCard);
                     return; 
@@ -306,22 +297,21 @@ function loadAccounts() {
         });
 
         accountsCache.forEach((_, id) => {
-            if (!newAccountIds.has(id)) accountsCache.delete(id);
+            if (!newAccountIds.has(id)) {
+                accountsCache.delete(id);
+            }
         });
         updateAllOtps();
     }, (error) => {
         console.error("Error fetching accounts:", error);
-        showToast(`Error fetching accounts: ${error.message}`, 'error');
+        showToast(`Error fetching accounts: ${error.message}`, "error");
     });
-}
-
-function showNoAccountsMessage(show) {
-    if (noAccountsMessage) noAccountsMessage.classList.toggle('hidden', !show);
 }
 
 function createAccountCard(account) {
     const card = document.createElement('div');
-    card.className = 'account-card material-surface p-5 rounded-xl shadow-lg';
+    // this class name is what we use to find all cards for the progress bar
+    card.className = 'auth-card surface-card p-5 rounded-xl shadow-lg'; 
     card.dataset.accountId = account.id;
 
     const otpValue = account.totp ? account.totp.generate() : "Error";
@@ -330,21 +320,21 @@ function createAccountCard(account) {
     card.innerHTML = `
         <div class="flex justify-between items-start mb-1">
             <div>
-                <h2 class="text-xl font-semibold text-gray-100">${account.name}</h2>
+                <h2 class="text-xl font-semibold">${account.name}</h2>
                 <p class="text-sm text-gray-400">${account.issuer || 'No Issuer'}</p>
             </div>
             <div class="space-x-2">
-                <button class="edit-btn text-blue-400 hover:text-blue-300 text-xs" title="Edit Account">Edit</button>
+                <button class="edit-btn text-accent-brand hover:text-main-brand text-xs" title="Edit Account">Edit</button>
                 <button class="delete-btn text-red-400 hover:text-red-300 text-xs" title="Delete Account">Delete</button>
             </div>
         </div>
         <div class="text-center my-3">
-            <p class="otp-code">${formattedOtp}</p>
+            <p class="otp-code font-bold">${formattedOtp}</p>
         </div>
-        <div class="w-full bg-gray-700 rounded-full h-1 mb-2">
-            <div class="progress-bar" style="width: 100%;"></div>
+        <div class="w-full bg-gray-500/30 rounded-full h-1 mb-2 overflow-hidden">
+            <div class="progress-bar h-full" style="width: 100%;"></div>
         </div>
-        <button class="copy-otp-btn text-xs text-gray-400 hover:text-[#03dac6] float-right">Copy Code</button>
+        <button class="copy-otp-btn text-xs text-gray-400 hover:text-accent-brand float-right">Copy Code</button>
     `;
 
     card.querySelector('.edit-btn').addEventListener('click', (e) => { e.stopPropagation(); openModal(account.id); });
@@ -355,11 +345,11 @@ function createAccountCard(account) {
 
 function createErrorAccountCard(accountName, accountId, errorMessage) {
     const card = document.createElement('div');
-    card.className = 'material-surface p-5 rounded-xl shadow-lg border border-red-500';
+    card.className = 'auth-card surface-card p-5 rounded-xl shadow-lg border border-red-500';
     card.dataset.accountId = accountId;
     card.innerHTML = `
         <div class="flex justify-between items-start mb-1">
-            <div><h2 class="text-xl font-semibold text-red-300">${accountName} (Error)</h2></div>
+            <div><h2 class="text-xl font-semibold text-red-400">${accountName} (Error)</h2></div>
              <button class="delete-btn text-red-400 hover:text-red-300 text-xs" title="Delete Account">Delete</button>
         </div>
         <div class="text-center my-3">
@@ -391,7 +381,8 @@ function updateAllOtps() {
     const timeLeft = period - (seconds % period);
     const progressPercent = (timeLeft / period) * 100;
     
-    document.querySelectorAll('.account-card').forEach(card => {
+    // updated selector to be specific to the account cards
+    document.querySelectorAll('.auth-card').forEach(card => {
         const accountId = card.dataset.accountId;
         if (accountsCache.has(accountId)) {
             const account = accountsCache.get(accountId);
@@ -400,17 +391,19 @@ function updateAllOtps() {
                 const formattedOtp = otpValue.length === 6 ? `${otpValue.slice(0,3)} ${otpValue.slice(3)}` : otpValue;
                 const otpElement = card.querySelector('.otp-code');
                 if (otpElement && otpElement.textContent !== formattedOtp) otpElement.textContent = formattedOtp;
-            } else {
-                 const otpElement = card.querySelector('.otp-code'); if(otpElement) otpElement.textContent = "Error";
             }
+            // this is the fix for the progress bar
             const progressBar = card.querySelector('.progress-bar');
-            if (progressBar) progressBar.style.width = `${progressPercent}%`;
+            if (progressBar) {
+                progressBar.style.width = `${progressPercent}%`;
+            }
         }
     });
 }
 
 // --- Event Listeners ---
 addAccountBtn.addEventListener('click', () => openModal());
+addAccountBtnTop.addEventListener('click', () => openModal());
 cancelModalBtn.addEventListener('click', closeModal);
 accountForm.addEventListener('submit', saveAccount);
 

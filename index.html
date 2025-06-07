@@ -1,190 +1,185 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark-mode"> <!-- default to dark mode -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AuthBean - by signalbean</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- otpauth.min.js script tag is now REMOVED from here and the body -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
+        html { scroll-behavior: smooth; }
+        
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #121212;
-            color: #e0e0e0;
-        }
-        .material-surface {
-            background-color: #1e1e1e;
-            border: 1px solid #2a2a2a;
-        }
-        .material-primary {
-            background-color: #bb86fc;
-            color: #000000;
-        }
-        .material-primary:hover {
-            background-color: #a775e8;
-        }
-        .material-secondary {
-            background-color: #03dac6; 
-            color: #000000;
-        }
-        .material-secondary:hover {
-            background-color: #02c9b6;
-        }
-        .material-input {
-            background-color: #2c2c2c;
-            border: 1px solid #3f3f3f;
-            color: #e0e0e0;
-        }
-        .material-input:focus {
-            border-color: #bb86fc;
-            outline: none;
-        }
-        .otp-code {
-            font-size: 2.5rem;
-            letter-spacing: 0.1em;
-            color: #03dac6;
-        }
-        .progress-bar {
-            height: 4px;
-            background-color: #bb86fc;
-            transition: width 1s linear;
-            border-radius: 2px;
-        }
-        /* Modal styles */
-        .modal-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 50;
-            transition: opacity 0.3s ease-in-out;
-        }
-        .modal-content {
-            min-width: 350px;
-            max-width: 500px;
-            transform: scale(0.95);
-            transition: transform 0.3s ease-in-out;
-        }
-        .modal-backdrop:not(.hidden) .modal-content {
-            transform: scale(1);
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* Custom scrollbar for dark theme */
-        ::-webkit-scrollbar {
-            width: 8px;
+        /* --- DARK MODE THEME (DEFAULT) --- */
+        .dark-mode body { background-color: #121212; color: #E5E7EB; }
+        .dark-mode .text-main-brand { color: #bb86fc; }
+        .dark-mode .text-accent-brand { color: #03dac6; }
+        .dark-mode .surface-card { background-color: #1e1e1e; border: 1px solid #2a2a2a; }
+        .dark-mode .material-input { background-color: #2c2c2c; border: 1px solid #3f3f3f; color: #E5E7EB; }
+        .dark-mode .material-input:focus { border-color: #bb86fc; outline: none; box-shadow: 0 0 10px rgba(187, 134, 252, 0.3); }
+        .dark-mode .otp-code { color: #03dac6; }
+        .dark-mode .progress-bar { background-color: #bb86fc; }
+        .dark-mode .modal-backdrop { background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+        .dark-mode .toast { border: 1px solid #374151; font-weight: 500; }
+        .dark-mode .toast-success { background-color: #03dac6; color: #000000; }
+        .dark-mode .toast-error { background-color: #cf6679; color: #000000; }
+        .dark-mode #theme-toggle-button { background-color: #374151; border: 1px solid #4b5563; }
+
+        /* --- LIGHT MODE THEME --- */
+        .light-mode body { background-color: #f3f4f6; color: #11182c; }
+        .light-mode .text-main-brand { color: #6d28d9; }
+        .light-mode .text-accent-brand { color: #0e7490; }
+        .light-mode .surface-card { background-color: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .light-mode .material-input { background-color: #f9fafb; border: 1px solid #d1d5db; color: #11182c; }
+        .light-mode .material-input:focus { border-color: #6d28d9; outline: none; box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.2); }
+        .light-mode .otp-code { color: #0e7490; }
+        .light-mode .progress-bar { background-color: #6d28d9; }
+        .light-mode .modal-backdrop { background-color: rgba(17, 24, 39, 0.6); }
+        .light-mode .toast { border: 1px solid #e5e7eb; font-weight: 500; color: #ffffff; }
+        .light-mode .toast-success { background-color: #059669; }
+        .light-mode .toast-error { background-color: #dc2626; }
+        .light-mode #theme-toggle-button { background-color: #e5e7eb; border: 1px solid #d1d5db; }
+
+
+        /* --- NEW BUTTON STYLE: Liquid Aurora --- */
+        .btn-liquid-aurora {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            z-index: 1;
         }
-        ::-webkit-scrollbar-track {
-            background: #1e1e1e;
+        .btn-liquid-aurora span { /* ensure text is above the animation */
+            position: relative;
+            z-index: 2;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #424242;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-        /* Toast notification styles */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.3s ease, bottom 0.3s ease;
-        }
-        .toast-success {
-            background-color: #03dac6;
-            color: #000000;
-        }
-        .toast-error {
-            background-color: #cf6679;
-            color: #000000;
-        }
-        .toast-info {
-            background-color: #6200ee; 
-            color: #ffffff;
-        }
-        .toast.show {
-            opacity: 1;
-            bottom: 40px;
-        }
-        .loading-spinner {
-            border: 3px solid #3f3f3f; 
-            border-top: 3px solid #bb86fc; 
+        .btn-liquid-aurora::before, .btn-liquid-aurora::after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-left: 8px;
+            filter: blur(40px);
+            z-index: -1;
+            transition: opacity 0.5s ease;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .btn-liquid-aurora::before {
+            background: #bb86fc; /* material purple */
+            top: -50px;
+            left: -50px;
+            animation: liquid-move-1 15s infinite;
         }
+        .btn-liquid-aurora::after {
+            background: #03dac6; /* material teal */
+            bottom: -50px;
+            right: -50px;
+            animation: liquid-move-2 15s infinite;
+        }
+        .light-mode .btn-liquid-aurora::before { background: #6d28d9; }
+        .light-mode .btn-liquid-aurora::after { background: #0e7490; }
+        
+        .btn-liquid-aurora:hover { transform: translateY(-2px); }
+
+        @keyframes liquid-move-1 {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(80px, 40px); }
+            50% { transform: translate(20px, 90px); }
+            75% { transform: translate(100px, 20px); }
+            100% { transform: translate(0, 0); }
+        }
+        @keyframes liquid-move-2 {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(-80px, -40px); }
+            50% { transform: translate(-20px, -90px); }
+            75% { transform: translate(-100px, -20px); }
+            100% { transform: translate(0, 0); }
+        }
+
+
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 8px; font-size: 0.9rem; z-index: 100; opacity: 0; transition: opacity 0.3s ease, bottom 0.3s ease; }
+        .toast.show { opacity: 1; bottom: 40px; }
+        .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; z-index: 50; transition: opacity 0.3s ease-in-out; }
+        .modal-content { min-width: 350px; max-width: 500px; transform: scale(0.95); transition: transform 0.3s ease-in-out; }
+        .modal-backdrop:not(.hidden) .modal-content { transform: scale(1); }
+        
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center pt-8 pb-8 px-4">
+<body class="antialiased">
+    
+    <!-- main wrapper for layout this fixes the theme switching jump -->
+    <div class="min-h-screen w-full flex flex-col items-center">
+        <!-- Header -->
+        <header class="w-full max-w-2xl text-center pt-8 relative">
+            <h1 class="text-4xl font-black">
+                <span class="text-main-brand">Auth</span><span class="text-accent-brand">Bean</span>
+            </h1>
+            <p class="text-sm text-gray-400">by <span class="font-semibold text-main-brand">signal</span><span class="font-semibold text-accent-brand">bean</span></p>
+            <p class="text-xs text-gray-500 mt-1">User ID: <span id="userIdDisplay">loading...</span></p>
+            
+            <!-- Theme Toggle Switch -->
+            <div class="absolute top-8 right-4">
+                <button id="theme-toggle-button" type="button" class="p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                    <i id="theme-icon" class="fas fa-sun text-lg text-yellow-400"></i>
+                </button>
+            </div>
+        </header>
 
-    <!-- Header -->
-    <header class="w-full max-w-2xl mb-8 text-center">
-        <h1 class="text-4xl font-bold text-[#bb86fc]">Auth<span class="text-[#03dac6]">Bean</span></h1>
-        <p class="text-sm text-gray-400">by signalbean</p>
-        <p class="text-xs text-gray-500 mt-1">User ID: <span id="userIdDisplay">loading...</span></p>
-    </header>
+        <!-- Main Content Area -->
+        <main class="w-full max-w-2xl flex-grow flex flex-col p-4">
+            <!-- this container will hold the button when no accounts are present -->
+            <div id="empty-state-container" class="flex-grow flex flex-col justify-center items-center text-center">
+                 <button id="addAccountBtn" class="btn-liquid-aurora font-bold py-3 px-8 rounded-full text-lg inline-block">
+                    <span><i class="fas fa-plus mr-2"></i>Add New Account</span>
+                </button>
+                <p class="text-gray-500 mt-4">No accounts yet. Add one to get started!</p>
+            </div>
 
-    <!-- Main Content Area -->
-    <main class="w-full max-w-2xl flex-grow">
-        <!-- Add Account Button -->
-        <div class="mb-6 text-center">
-            <button id="addAccountBtn" class="material-primary font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
-                Add New Account
-            </button>
-        </div>
+            <!-- this container will hold the accounts list and a smaller add button -->
+            <div id="accounts-view" class="hidden w-full">
+                <div class="text-center mb-6">
+                    <button id="addAccountBtnTop" class="btn-liquid-aurora font-semibold py-2 px-5 rounded-lg text-sm">
+                        <span><i class="fas fa-plus mr-1"></i>Add Account</span>
+                    </button>
+                </div>
+                <div id="accountsList" class="space-y-4">
+                    <!-- Account cards will be injected here by JavaScript -->
+                </div>
+            </div>
+        </main>
 
-        <!-- Accounts List -->
-        <div id="accountsList" class="space-y-4">
-            <!-- Account cards will be injected here by JavaScript -->
-        </div>
-         <p id="noAccountsMessage" class="text-center text-gray-500 mt-10 hidden">No accounts yet. Add one to get started!</p>
-    </main>
+        <!-- Footer -->
+        <footer class="w-full max-w-2xl text-center pb-8">
+            <p class="text-xs text-gray-600">&copy; 2025 AuthBean by signalbean</p>
+        </footer>
+    </div>
 
-    <!-- Footer -->
-    <footer class="w-full max-w-2xl mt-12 text-center">
-        <p class="text-xs text-gray-600">&copy; 2025 AuthBean by signalbean</p>
-    </footer>
 
     <!-- Add/Edit Account Modal -->
     <div id="accountModal" class="modal-backdrop hidden">
-        <div class="material-surface modal-content p-6 rounded-xl shadow-2xl w-11/12 md:w-full">
-            <h3 id="modalTitle" class="text-2xl font-semibold mb-6 text-gray-100">Add New Account</h3>
+        <div class="surface-card modal-content p-6 rounded-xl shadow-2xl w-11/12 md:w-full">
+            <h3 id="modalTitle" class="text-2xl font-bold mb-6 text-center"><span class="text-main-brand">Add</span> <span class="text-accent-brand">Account</span></h3>
             <form id="accountForm">
                 <input type="hidden" id="accountId">
                 <div class="mb-4">
-                    <label for="accountName" class="block text-sm font-medium text-gray-300 mb-1">Account Name</label>
+                    <label for="accountName" class="block text-sm font-medium text-gray-400 mb-1">Account Name</label>
                     <input type="text" id="accountName" name="accountName" class="w-full p-3 material-input rounded-lg" placeholder="e.g., My Awesome Service" required>
                 </div>
                 <div class="mb-4">
-                    <label for="issuerName" class="block text-sm font-medium text-gray-300 mb-1">Issuer (Optional)</label>
-                    <input type="text" id="issuerName" name="issuerName" class="w-full p-3 material-input rounded-lg" placeholder="e.g., Company Inc.">
+                    <label for="issuerName" class="block text-sm font-medium text-gray-400 mb-1">Issuer (Optional)</label>
+                    <input type="text" id="issuerName" name="issuerName" class="w-full p-3 material-input rounded-lg" placeholder="e.g., Google, GitHub, etc.">
                 </div>
                 <div class="mb-6">
-                    <label for="secretKey" class="block text-sm font-medium text-gray-300 mb-1">Secret Key (Base32)</label>
-                    <input type="text" id="secretKey" name="secretKey" class="w-full p-3 material-input rounded-lg" placeholder="Enter your Base32 secret key" required>
+                    <label for="secretKey" class="block text-sm font-medium text-gray-400 mb-1">Secret Key (Base32)</label>
+                    <input type="text" id="secretKey" name="secretKey" class="w-full p-3 material-input rounded-lg" placeholder="Paste your Base32 secret key here" required>
                 </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" id="cancelModalBtn" class="py-2 px-5 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors">Cancel</button>
-                    <button type="submit" class="material-primary font-semibold py-2 px-5 rounded-lg">Save Account</button>
+                <div class="flex justify-end space-x-3 mt-8">
+                    <button type="button" id="cancelModalBtn" class="py-2 px-5 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition-colors">Cancel</button>
+                    <button type="submit" class="btn-liquid-aurora font-semibold py-2 px-5 rounded-lg"><span>Save Account</span></button>
                 </div>
             </form>
         </div>
@@ -192,11 +187,11 @@
 
     <!-- Confirm Delete Modal -->
     <div id="confirmDeleteModal" class="modal-backdrop hidden">
-        <div class="material-surface modal-content p-6 rounded-xl shadow-2xl w-11/12 md:w-auto">
-            <h3 class="text-xl font-semibold mb-4 text-gray-100">Confirm Deletion</h3>
-            <p class="text-gray-300 mb-6">Are you sure you want to delete "<span id="accountNameToDelete" class="font-semibold"></span>"? This action cannot be undone.</p>
+        <div class="surface-card modal-content p-6 rounded-xl shadow-2xl w-11/12 md:w-auto">
+            <h3 class="text-xl font-bold mb-4 text-center text-red-500">Confirm Deletion</h3>
+            <p class="text-gray-300 mb-6 text-center">Are you sure you want to delete "<span id="accountNameToDelete" class="font-semibold text-accent-brand"></span>"?<br>This action cannot be undone.</p>
             <div class="flex justify-end space-x-3">
-                <button type="button" id="cancelDeleteBtn" class="py-2 px-5 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors">Cancel</button>
+                <button type="button" id="cancelDeleteBtn" class="py-2 px-5 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors">Cancel</button>
                 <button type="button" id="confirmDeleteBtn" class="bg-red-600 hover:bg-red-500 text-white font-semibold py-2 px-5 rounded-lg">Delete</button>
             </div>
         </div>
@@ -204,13 +199,40 @@
 
     <!-- Toast Notification Area -->
     <div id="toastArea"></div>
-
-    <!-- Firebase SDKs -->
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
     
-    <!-- App Logic -->
+    <!-- App Logic & Firebase SDKs are handled in script.js as modules -->
     <script type="module" src="script.js"></script>
+    
+    <!-- Inline Scripts -->
+    <script>
+        // --- Theme Toggle Logic ---
+        const themeToggleButton = document.getElementById('theme-toggle-button');
+        const themeIcon = document.getElementById('theme-icon');
+        const htmlEl = document.documentElement;
+
+        function setTheme(theme) {
+            if (theme === 'light') {
+                htmlEl.classList.add('light-mode');
+                htmlEl.classList.remove('dark-mode');
+                themeIcon.classList.remove('fa-sun', 'text-yellow-400');
+                themeIcon.classList.add('fa-moon', 'text-indigo-400');
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlEl.classList.remove('light-mode');
+                htmlEl.classList.add('dark-mode');
+                themeIcon.classList.remove('fa-moon', 'text-indigo-400');
+                themeIcon.classList.add('fa-sun', 'text-yellow-400');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+        
+        const storedTheme = localStorage.getItem('theme') || 'dark';
+        setTheme(storedTheme);
+
+        themeToggleButton.addEventListener('click', () => {
+            const isLight = htmlEl.classList.contains('light-mode');
+            setTheme(isLight ? 'dark' : 'light');
+        });
+    </script>
 </body>
 </html>
