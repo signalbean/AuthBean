@@ -1,4 +1,8 @@
-// Firebase imports - these are essential for connecting to Firestore
+// Import OTPAuth library as a proper ES Module
+// this is the main fix my dude
+import * as otpauth from 'https://cdn.jsdelivr.net/npm/otpauth@9.2.1/dist/otpauth.esm.js';
+
+// Firebase imports these are all good
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { 
     getAuth, 
@@ -19,8 +23,17 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- Config and Global Variables ---
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO_API_KEY", authDomain: "DEMO_PROJECT.firebaseapp.com", projectId: "DEMO_PROJECT" };
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'authbean-default-app';
+// you already have your real firebaseConfig here which is perfect
+const firebaseConfig = {
+    apiKey: "AIzaSyAyiQeWpzDKtKyzB1h33P3BgAh4BZw8SQ4",
+    authDomain: "authbean.firebaseapp.com",
+    projectId: "authbean",
+    storageBucket: "authbean.appspot.com",
+    messagingSenderId: "988226514837",
+    appId: "1:988226514837:web:9234019855ea652103d09c",
+    measurementId: "G-SFQ63NGZT6"
+};
+const appId = firebaseConfig.appId;
 
 let db, auth;
 let userId;
@@ -62,10 +75,10 @@ function showToast(message, type = 'success', duration = 3000) {
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => {
-            if (toast.parentNode === toastArea) { // Check if still child before removing
+            if (toast.parentNode === toastArea) {
                  toastArea.removeChild(toast);
             }
-        }, 300);
+        }, 300); 
     }, duration);
 }
 
@@ -76,8 +89,6 @@ async function initializeFirebase() {
         const app = initializeApp(firebaseConfig);
         db = getFirestore(app);
         auth = getAuth(app);
-        // For debugging Firestore (after pre checks)
-        // import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js").then(firestore => firestore.setLogLevel('debug'));
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -94,25 +105,19 @@ async function initializeFirebase() {
                 showNoAccountsMessage(true);
                 try {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        console.log("Attempting sign in with custom token...");
                         await signInWithCustomToken(auth, __initial_auth_token);
-                        console.log("Successfully signed in with custom token.");
                     } else {
-                        console.log("No custom token, attempting anonymous sign in...");
                         await signInAnonymously(auth);
-                        console.log("Successfully signed in anonymously.");
                     }
                 } catch (error) {
                     console.error("Error during sign-in:", error);
                     showToast(`Error signing in: ${error.message}`, "error");
-                    userIdDisplay.textContent = "Error signing in";
                 }
             }
         });
     } catch (error) {
         console.error("Firebase initialization error:", error);
         showToast(`Firebase init error: ${error.message}`, "error", 5000);
-        userIdDisplay.textContent = "Firebase Init Error";
     }
 }
 
@@ -133,13 +138,13 @@ function openModal(accountId = null) {
         secretKeyInput.disabled = false;
     }
     accountModal.classList.remove('hidden');
-    accountModal.style.opacity = "0"; // For transition
-    setTimeout(() => accountModal.style.opacity = "1", 10); // Start transition
+    accountModal.style.opacity = "0"; 
+    setTimeout(() => accountModal.style.opacity = "1", 10); 
 }
 
 function closeModal() {
     accountModal.style.opacity = "0";
-    setTimeout(() => accountModal.classList.add('hidden'), 300); // Wait for transition
+    setTimeout(() => accountModal.classList.add('hidden'), 300); 
 }
 
 function openDeleteModal(id, name) {
@@ -171,12 +176,8 @@ async function saveAccount(event) {
     const issuer = issuerNameInput.value.trim();
     const secret = secretKeyInput.value.trim().replace(/\s+/g, '').toUpperCase();
 
-    if (!name) {
-        showToast("Account name cannot be empty.", "error");
-        return;
-    }
-     if (!secret) {
-        showToast("Secret key cannot be empty.", "error");
+    if (!name || !secret) {
+        showToast("Account name and secret key cannot be empty.", "error");
         return;
     }
     if (!/^[A-Z2-7]+=*$/.test(secret) || secret.length < 16) {
@@ -184,6 +185,7 @@ async function saveAccount(event) {
         return;
     }
     try {
+        // no more window prefix we use the imported module directly
         new otpauth.TOTP({ secret: otpauth.Secret.fromBase32(secret) });
     } catch (e) {
         showToast("Invalid secret key. Could not initialize TOTP. " + e.message, "error");
@@ -201,13 +203,10 @@ async function saveAccount(event) {
     try {
         const accountsCollectionPath = `artifacts/${appId}/users/${userId}/accounts`;
         if (id) { 
-            // When editing, ensure the original secret is preserved if not being changed by UI
-            // For this version, secret isn't editable in the UI after creation, so keep the cached one.
             const existingAccount = accountsCache.get(id);
             if (existingAccount) {
                  accountData.secret = existingAccount.secret; 
             } else {
-                // This case should ideally not happen if editing a valid account
                 showToast("Error finding original account data for update.", "error");
                 return;
             }
@@ -235,7 +234,6 @@ async function deleteAccountConfirmed() {
     try {
         const accountRef = doc(db, `artifacts/${appId}/users/${userId}/accounts`, accountIdToDelete);
         await deleteDoc(accountRef);
-        accountsCache.delete(accountIdToDelete);
         showToast('Account deleted successfully!');
     } catch (error) {
         console.error('Error deleting account:', error);
@@ -258,12 +256,10 @@ function loadAccounts() {
     const q = query(collection(db, accountsCollectionPath));
 
     if (accountsUnsubscribe) {
-        console.log("loadAccounts: Unsubscribing from previous listener.");
         accountsUnsubscribe(); 
     }
     
     accountsUnsubscribe = onSnapshot(q, (snapshot) => {
-        console.log(`Snapshot received: ${snapshot.docs.length} accounts.`);
         if (snapshot.empty) {
             accountsListDiv.innerHTML = '';
             showNoAccountsMessage(true);
@@ -274,13 +270,7 @@ function loadAccounts() {
         showNoAccountsMessage(false);
         const newAccountIds = new Set();
         
-        const sortedDocs = snapshot.docs.sort((a, b) => {
-            const nameA = a.data().name.toLowerCase();
-            const nameB = b.data().name.toLowerCase();
-            if (nameA < nameB) return -1;
-            if (nameA > nameB) return 1;
-            return 0;
-        });
+        const sortedDocs = snapshot.docs.sort((a, b) => a.data().name.toLowerCase().localeCompare(b.data().name.toLowerCase()));
 
         accountsListDiv.innerHTML = ''; 
 
@@ -291,6 +281,7 @@ function loadAccounts() {
 
             if (!accountsCache.has(accountId) || accountsCache.get(accountId).updatedAt?.toMillis() !== accountData.updatedAt?.toMillis()) {
                 try {
+                    // no more window prefix here either
                     const totp = new otpauth.TOTP({
                         issuer: accountData.issuer || undefined,
                         label: accountData.name,
@@ -308,8 +299,10 @@ function loadAccounts() {
                 }
             }
             const cachedAccount = accountsCache.get(accountId);
-            const accountCard = createAccountCard(cachedAccount);
-            accountsListDiv.appendChild(accountCard);
+             if (cachedAccount) {
+                const accountCard = createAccountCard(cachedAccount);
+                accountsListDiv.appendChild(accountCard);
+            }
         });
 
         accountsCache.forEach((_, id) => {
@@ -318,9 +311,7 @@ function loadAccounts() {
         updateAllOtps();
     }, (error) => {
         console.error("Error fetching accounts:", error);
-        showToast(`Error fetching accounts: ${error.message}`, "error");
-        accountsListDiv.innerHTML = '<p class="text-red-400 text-center">Could not load accounts. Please try again later.</p>';
-        showNoAccountsMessage(false);
+        showToast(`Error fetching accounts: ${error.message}`, 'error');
     });
 }
 
@@ -383,8 +374,6 @@ function createErrorAccountCard(accountName, accountId, errorMessage) {
 function copyOtpToClipboard(otp, cardElement) {
     const textArea = document.createElement("textarea");
     textArea.value = otp.replace(/\s/g, ''); 
-    textArea.style.position = "fixed"; 
-    textArea.style.left = "-9999px";
     document.body.appendChild(textArea);
     textArea.focus(); textArea.select();
     try {
@@ -392,7 +381,7 @@ function copyOtpToClipboard(otp, cardElement) {
         showToast('OTP copied to clipboard!', 'success');
         const copyBtn = cardElement.querySelector('.copy-otp-btn');
         if(copyBtn) { copyBtn.textContent = 'Copied!'; setTimeout(() => { copyBtn.textContent = 'Copy Code'; }, 2000); }
-    } catch (err) { showToast('Failed to copy OTP.', 'error'); console.error('Fallback: Oops, unable to copy', err); }
+    } catch (err) { showToast('Failed to copy OTP.', 'error'); }
     document.body.removeChild(textArea);
 }
 
