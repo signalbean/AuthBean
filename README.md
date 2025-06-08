@@ -1,4 +1,4 @@
-Yo! **AuthBean** by **signalbean**
+Yo!
 
 ## What's AuthBean?: The TL;DR:
 
@@ -27,12 +27,12 @@ Wanna run it or chip in? Here's the quick version:
 
 1.  **Clone Repo:**
     ```bash
-    git clone [https://github.com/signalbean/AuthBean.git](https://github.com/signalbean/AuthBean.git) && cd AuthBean
+    git clone https://github.com/signalbean/AuthBean.git && cd AuthBean
     ```
 2.  **Firebase Setup (Don't Skip!):**
     * Go to [Firebase Console](https://console.firebase.google.com/), make a project.
     * Get your `firebaseConfig` object from project settings.
-    * `script.js` needs this. For local dev, you can make a `config.js` (add to `.gitignore`!) and import it, or (less ideal for public repos) paste it directly into `script.js` where the demo config is.
+    * `script.js` needs this. For local dev, you can make a `config.js` (add to `.gitignore`) and import it, or (less ideal for public repos) paste it directly into `script.js` where the demo config is.
     * Enable Firestore (start in test mode) and Anonymous Sign-in. Path structure: `/artifacts/{appId}/users/{userId}`.
 3.  **Open `index.html`:** Drag it into your browser. Done!
 
@@ -46,12 +46,12 @@ Wanna run it or chip in? Here's the quick version:
 ## Wanna Help Out?: Collab Time!
 
 Built with a dev night in mind. To contribute:
-Fork -> New Branch (`feature/YourIdea`) -> Code it -> Commit -> Push -> Pull Request. Keep it chill!
+Fork -> New Branch (`feature/your idea`) -> Code it -> Commit -> Push -> Pull Request.
 
 ## Disclaimer: Heads Up!
 
-* **Concept** It's a demo bruv, It uses real security ideas, but for Fort Knox level, get pros (like me) to check it.
-* **Secret Keys:** Stored in Firestore. Firebase security is solid, but be mindful.
+* **Concept** It's a demo bruv, It uses real security ideas, but for Fort Knox level, get others to check it.
+* **Secret Keys:** Stored in Firestore. Firebase security is good enough, but be mindful.
 
 **Dreamin' Bout:** QR scanning, reordering, export/import, themes!
 
