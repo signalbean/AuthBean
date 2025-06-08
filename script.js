@@ -368,11 +368,18 @@ function copyOtpToClipboard(otp, cardElement) {
     textArea.focus(); textArea.select();
     try {
         document.execCommand('copy');
-        showToast('OTP copied to clipboard!', 'success');
-        const copyBtn = cardElement.querySelector('.copy-otp-btn');
-        if(copyBtn) { copyBtn.textContent = 'Copied!'; setTimeout(() => { copyBtn.textContent = 'Copy Code'; }, 2000); }
-    } catch (err) { showToast('Failed to copy OTP.', 'error'); }
-    document.body.removeChild(textArea);
+    showToast('OTP copied to clipboard!', 'success');
+    const copyBtn = cardElement.querySelector('.copy-otp-btn');
+    if(copyBtn) {
+        copyBtn.textContent = 'Copied! ✔️';
+        copyBtn.disabled = true; 
+        setTimeout(() => {
+            copyBtn.textContent = 'Copy Code';
+            copyBtn.disabled = false;
+        }, 2000);
+    }
+} catch (err) { showToast('Failed to copy OTP.', 'error'); }
+document.body.removeChild(textArea);
 }
 
 function updateAllOtps() {
