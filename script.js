@@ -122,6 +122,17 @@ async function initializeFirebase() {
 }
 
 // --- Modal Handling ---
+function handleEscKey(event) {
+    if (event.key === 'Escape') {
+        if (!accountModal.classList.contains('hidden')) {
+            closeModal();
+        }
+        if (!confirmDeleteModal.classList.contains('hidden')) {
+            closeDeleteModal();
+        }
+    }
+}
+
 function openModal(accountId = null) {
     accountForm.reset();
     if (accountId && accountsCache.has(accountId)) {
@@ -140,11 +151,13 @@ function openModal(accountId = null) {
     accountModal.classList.remove('hidden');
     accountModal.style.opacity = "0"; 
     setTimeout(() => accountModal.style.opacity = "1", 10); 
+    document.addEventListener('keydown', handleEscKey);
 }
 
 function closeModal() {
     accountModal.style.opacity = "0";
     setTimeout(() => accountModal.classList.add('hidden'), 300); 
+    document.removeEventListener('keydown', handleEscKey);
 }
 
 function openDeleteModal(id, name) {
@@ -153,6 +166,7 @@ function openDeleteModal(id, name) {
     confirmDeleteModal.classList.remove('hidden');
     confirmDeleteModal.style.opacity = "0";
     setTimeout(() => confirmDeleteModal.style.opacity = "1", 10);
+    document.addEventListener('keydown', handleEscKey);
 }
 
 function closeDeleteModal() {
@@ -161,7 +175,9 @@ function closeDeleteModal() {
         confirmDeleteModal.classList.add('hidden');
         accountIdToDelete = null;
     }, 300);
+    document.removeEventListener('keydown', handleEscKey);
 }
+
 
 // --- Firestore Operations ---
 async function saveAccount(event) {
@@ -310,7 +326,6 @@ function loadAccounts() {
 
 function createAccountCard(account) {
     const card = document.createElement('div');
-    // this class name is what we use to find all cards for the progress bar
     card.className = 'auth-card surface-card p-5 rounded-xl shadow-lg'; 
     card.dataset.accountId = account.id;
 
@@ -368,18 +383,18 @@ function copyOtpToClipboard(otp, cardElement) {
     textArea.focus(); textArea.select();
     try {
         document.execCommand('copy');
-    showToast('OTP copied to clipboard!', 'success');
-    const copyBtn = cardElement.querySelector('.copy-otp-btn');
-    if(copyBtn) {
-        copyBtn.textContent = 'Copied! ✔️';
-        copyBtn.disabled = true; 
-        setTimeout(() => {
-            copyBtn.textContent = 'Copy Code';
-            copyBtn.disabled = false;
-        }, 2000);
-    }
-} catch (err) { showToast('Failed to copy OTP.', 'error'); }
-document.body.removeChild(textArea);
+        showToast('OTP copied to clipboard!', 'success');
+        const copyBtn = cardElement.querySelector('.copy-otp-btn');
+        if(copyBtn) {
+            copyBtn.textContent = 'Copied! ✔️';
+            copyBtn.disabled = true; 
+            setTimeout(() => {
+                copyBtn.textContent = 'Copy Code';
+                copyBtn.disabled = false;
+            }, 2000);
+        }
+    } catch (err) { showToast('Failed to copy OTP.', 'error'); }
+    document.body.removeChild(textArea);
 }
 
 function updateAllOtps() {
@@ -388,7 +403,6 @@ function updateAllOtps() {
     const timeLeft = period - (seconds % period);
     const progressPercent = (timeLeft / period) * 100;
     
-    // updated selector to be specific to the account cards
     document.querySelectorAll('.auth-card').forEach(card => {
         const accountId = card.dataset.accountId;
         if (accountsCache.has(accountId)) {
@@ -399,7 +413,6 @@ function updateAllOtps() {
                 const otpElement = card.querySelector('.otp-code');
                 if (otpElement && otpElement.textContent !== formattedOtp) otpElement.textContent = formattedOtp;
             }
-            // this is the fix for the progress bar
             const progressBar = card.querySelector('.progress-bar');
             if (progressBar) {
                 progressBar.style.width = `${progressPercent}%`;
